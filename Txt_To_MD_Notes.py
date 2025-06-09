@@ -1,3 +1,4 @@
+
 #Función de separar poemas del archivo
 def separarPaginasArchivo (ruta_archivo, separador = "________________"):
 
@@ -36,9 +37,13 @@ def separarPaginasArchivo (ruta_archivo, separador = "________________"):
 
     return listaArchivos
 
-def crearArchivosLista (lista, ruta):
+def crearArchivosLista (lista, ruta, tag):
 
     titulos = []
+
+    #Crea un header con un hashtag que lo conecta al dataview del índice
+    tag= tag.replace(" ", "_")
+    paginaTag = f'---\ntags:\n  - "{tag}"\n---\n'
 
     for paginas in lista:
 
@@ -53,6 +58,8 @@ def crearArchivosLista (lista, ruta):
         #Elimina espacios innecesarios al final
         pagina_titulo = pagina_titulo.replace("\n", "")
 
+        #Coloca los tags a la página
+        archivo = paginaTag + archivo
 
         while pagina_titulo[-1] == " ":
             pagina_titulo = pagina_titulo[:-1]
@@ -70,23 +77,31 @@ def crearArchivosLista (lista, ruta):
 def separarCrearIndice():
 
     #Inputs para generar las funciones anteriores
-    archivoOriginal = input("Escriba la ruta del archivo que desea separar en páginas: ")
-    rutaDestino = input("Escriba la ruta donde desea que se creen los archivos: ")
+    
 
     #Creación del Indice
     nombreIndice = input("Ingresa el nombre que te gustaría para el índice: ")
-    indice = crearArchivosLista(separarPaginasArchivo(archivoOriginal) , rutaDestino)
+    archivoOriginal = input("Escriba la ruta del archivo que desea separar en páginas: ")
+    rutaDestino = input("Escriba la ruta donde desea que se creen los archivos: ")
+
+    indice = crearArchivosLista(separarPaginasArchivo(archivoOriginal) , rutaDestino, nombreIndice)
 
     print(f"{nombreIndice}:\n")
 
     paginaIndice = ""
     i=0
-    for pagina in indice:
-        if i%2 == 0:
-            paginaIndice += f"\n\n- [[{pagina}]]"
-        else:
-            paginaIndice += f" [[{pagina}]]"
 
+    #Crea un Dataview para identificar los archivos del indice
+    tag= nombreIndice
+    tag= tag.replace(" ", "_")
+    paginaDataview = f'```dataview\ntable year\nfrom #{tag}\nsort rating desc\n```\n'
+    
+    #Crea la lista con los indices
+    for pagina in indice:
+            paginaIndice += f"\n- [[{pagina}]]\n"
+
+    #Crea un Dataview al Inicio
+    paginaIndice = paginaDataview + paginaIndice
 
     print(paginaIndice + "\n")
 

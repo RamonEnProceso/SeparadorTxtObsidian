@@ -1,4 +1,9 @@
-#Función de separar poemas del archivo
+import os
+import json
+
+
+
+#Función de separar paginas del archivo
 def separar_paginas_archivo (ruta_archivo, separador = "________________"):
 
     lista_archivos = []
@@ -42,6 +47,7 @@ def separar_paginas_archivo (ruta_archivo, separador = "________________"):
         return "error"
 
 
+
 #Función para crear las notas
 def crear_archivos_lista (lista, ruta, tag):
 
@@ -81,55 +87,16 @@ def crear_archivos_lista (lista, ruta, tag):
 
 
 
-
 #Separa las paginas para conectarlas a un indice nuevo en Obsidian
-def separar_crear_indice():
+def separar_indice(diccionario):
+    nombre_indice = diccionario["nombre"]
+    archivo_origen = diccionario["origen"]
+    ruta_destino = diccionario["destino"]
+    indice = crear_archivos_lista(separar_paginas_archivo(archivo_origen) , ruta_destino, nombre_indice)
 
-    #Inputs para generar las funciones anteriores
-    archivo_original = input("Escriba la ruta del archivo que desea separar en páginas: ")
-
-    #Verifica que el archivo ingresado sea compatible con el programa
-    while archivo_original[-4:] != ".txt":
-        print("No se ha detectado un archivo compatible. Por favor, ingrese un archivo válido.\n")
-        archivo_original = input("Escriba la ruta del archivo que desea separar en páginas: ")
-
-    ruta_destino = input("Escriba la ruta donde desea que se creen los archivos: ")
-
-    while ruta_destino[-1] not in "\\/":
-         print("No se ha escrito bien la ruta destinada. Por favor, ingrese una ruta válida.\n")
-         ruta_destino = input("Escriba la ruta donde desea que se creen los archivos: ")
-
-
-    #Creación del Indice
-    nombre_indice = input("Ingresa el nombre que te gustaría para el índice: ")
-
-    indice = crear_archivos_lista(separar_paginas_archivo(archivo_original) , ruta_destino, nombre_indice)
-
-    while indice == "":
-        #Inputs para generar las funciones anteriores
-        archivo_original = input("Escriba la ruta del archivo que desea separar en páginas: ")
-
-        #Verifica que el archivo ingresado sea compatible con el programa
-        while archivo_original[-4:] != ".txt":
-            print("No se ha detectado un archivo compatible. Por favor, ingrese un archivo válido.\n")
-            archivo_original = input("Escriba la ruta del archivo que desea separar en páginas: ")
-
-        ruta_destino = input("Escriba la ruta donde desea que se creen los archivos: ")
-        
-        while ruta_destino[-1] not in "\\/":
-            print("No se ha escrito bien la ruta destinada. Por favor, ingrese una ruta válida.\n")
-            ruta_destino = input("Escriba la ruta donde desea que se creen los archivos: ")
-
-
-        #Creación del Indice
-        nombre_indice = input("Ingresa el nombre que te gustaría para el índice: ")
-
-        indice = crear_archivos_lista(separar_paginas_archivo(archivo_original) , ruta_destino, nombre_indice)
-
-    print(f"{nombre_indice}:\n")
+    print(f"{diccionario["nombre"]}:\n")
 
     pagina_indice = ""
-    i=0
 
     #Crea un Dataview para identificar los archivos del indice
     tag= nombre_indice
@@ -154,5 +121,157 @@ def separar_crear_indice():
 
 
 
-separar_crear_indice()
+
+
+
+#Verifica si los inputs son correctos
+
+def input_archivo_origen(): 
+    condicion = False 
+    while not condicion: #Mientras que no se cumplan las condiciones, repetir
+        valor = input("Escriba la ruta del archivo que desea separar en páginas: ")
+        if not os.path.exists(valor):
+            print("No se ha detectado un archivo existente. Por favor, ingrese un archivo.\n")
+        elif valor[-4:] != ".txt":
+            print("No se ha detectado un archivo compatible. Por favor, ingrese un archivo válido.\n")
+        else:
+            condicion = True
+    return valor
+
+def input_ruta_destino():
+    condicion = False
+    while not condicion:
+        ruta = input("Escriba la ruta donde desea que se creen los archivos: ")
+        if not os.path.exists(ruta):
+             print("No se ha escrito una ruta existente. Por favor, ingrese una ruta válida\n")
+        elif ruta [-1] not in "\\/":
+            print("No se ha escrito bien la ruta destinada. Por favor, ingrese una ruta válida.\n")
+        else:
+            condicion = True
+    return ruta
+
+def input_indice_nombre():
+    nombre = input("Ingresa el nombre que te gustaría para el índice: ")
+    return nombre
+
+def input_respuesta():
+    respuesta = input('Ingrese "y" para sí, o "n" para no: ').lower()
+    while respuesta not in "yn":
+        print("Por favor ingrese un valor correcto")
+        respuesta = input('Ingrese "y" para sí, o "n" para no: ')
+    if respuesta == "y":
+        return True
+    else:
+        return False
+
+def input_indice_elegir(cantidad):
+    condicion = False
+    while not condicion:
+        try:
+            indice_elegido = int(input("Ingrese el número del índice que desea elegir: "))
+            if indice_elegido < 0 or indice_elegido > cantidad:
+                print("El número se encuentra fuera de rango. Por favor ingrese un número valido")
+            else:
+                condicion = True
+        except ValueError:
+            print("El valor escrito no es válido. Por favor ingrese un número valido")
+    return indice_elegido
+
+
+
+
+#Verifica o carga antiguos indices
+
+def cargar_indices_guardados_inicio():
+    try:
+        with open("historial.json","r",encoding="utf-8") as archivo:
+            historial = json.load(archivo)
+
+        contador = 0
+
+        print("Se han econtrado historiales pasados. ¿Desea separar nuevamente un índice?")
+        respuesta_1 = input_respuesta()
+
+        if respuesta_1:
+            for indices in historial:
+                print(f"{contador}. {indices["nombre"]}")
+                contador += 1
+            indice_elegido = input_indice_elegir(contador)
+            separar_indice(historial[indice_elegido])
+            print("\n¿Desea crear un nuevo indice?. \n")
+            respuesta_2 = input_respuesta()
+            return respuesta_2
+        else:
+            return True
+
+    except FileNotFoundError:
+        return True
+    
+    except json.JSONDecodeError:
+        print("El historial de indices encontrado está dañado. ¿Desea crear uno nuevo de cero?\n")
+        respuesta_3 = input_respuesta()
+        if respuesta_3:
+            with open("historial.json","w",encoding="utf-8") as archivo:
+                archivo.write("")
+            return True
+        else:
+            return True
+
+
+
+#Crear indice nuevo
+def crear_indice():
+
+    print("\nSe procedera a crear un nuevo índice. \n")
+
+    indice = ""
+    nombre_indice = input_indice_nombre()
+
+    while indice == "":
+        archivo_origen = input_archivo_origen()
+        ruta_destino = input_ruta_destino()
+        indice = crear_archivos_lista(separar_paginas_archivo(archivo_origen) , ruta_destino, nombre_indice)
+
+    diccionario_indice = {"nombre":nombre_indice,"origen":archivo_origen,"destino":ruta_destino}
+        
+    separar_indice(diccionario_indice)
+
+    json_guardar(diccionario_indice)
+
+    return
+
+
+
+#Guarda los datos en el json
+def json_guardar(diccionario):
+    print("¿Desea guardar los datos para próximos usos? (y/n)")
+    respuesta = input_respuesta()
+    if respuesta:
+        
+        with open("historial.json","r",encoding="utf-8") as archivo:
+            historial = json.load(archivo)
+            historial.append(diccionario)
+
+        with open("historial.json","w",encoding="utf-8") as archivo:
+            json.dump(historial, archivo, indent=2)
+
+
+#Función maestra 
+def main():
+
+    continuar = cargar_indices_guardados_inicio()
+
+    respuesta = True
+    if continuar:
+        while respuesta:
+            crear_indice()
+            print("¿Desea crear otro indice?")
+            respuesta = input_respuesta()
+        print("¡Gracias por usar mi programa! ¡Suerte con tu documentación!!")
+        return
+    else:
+        print("¡Gracias por usar mi programa! ¡Suerte con tu documentación!!")
+        return
+
+main()
 

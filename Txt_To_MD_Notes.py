@@ -212,7 +212,7 @@ def cargar_indices_guardados_inicio():
         respuesta_3 = input_respuesta()
         if respuesta_3:
             with open("historial.json","w",encoding="utf-8") as archivo:
-                archivo.write("")
+                json.dump("[]", archivo, indent=2)
             return True
         else:
             return True
@@ -248,9 +248,16 @@ def json_guardar(diccionario):
     respuesta = input_respuesta()
     if respuesta:
         
-        with open("historial.json","r",encoding="utf-8") as archivo:
-            historial = json.load(archivo)
-            historial.append(diccionario)
+        try:
+            with open("historial.json","r",encoding="utf-8") as archivo:
+                historial = json.load(archivo)
+                if isinstance(historial, str):
+                    historial = []
+        except FileNotFoundError:
+            print("No se ha encontrado un archivo de guardado. Generandolo...")
+            historial = []
+
+        historial.append(diccionario)
 
         with open("historial.json","w",encoding="utf-8") as archivo:
             json.dump(historial, archivo, indent=2)
